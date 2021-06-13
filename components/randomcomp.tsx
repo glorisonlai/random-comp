@@ -1,33 +1,25 @@
 import React, { useEffect } from "react";
 import axios from "axios";
+import dynamic from "next/dynamic";
 
 interface LayoutProps {
-  children: Array<React.ReactNode>;
+  children: Array<JSX.Element>;
 }
 
-type InputProps = React.ComponentProps<"input">;
-
-const extractProps = (reactComp: React.ReactNode) => {
-  console.log(reactComp);
-};
-
-const RandomComp = (props: LayoutProps) => {
-  const { children } = props;
+const RandomComp: React.FC<LayoutProps> = ({ children }) => {
   const chosenChild = children[Math.floor(Math.random() * children.length)];
   const start = new Date().getTime();
   let timeToFirstInter = -1;
   useEffect(() => {
     const logger = () => {
       const end = new Date().getTime();
-      axios.post(
-        "/api/write_log",
-        JSON.stringify({
-          // child: chosenChild,
-          origin: window.location.pathname,
-          duration: end - start,
-          timeToFirstInter: timeToFirstInter,
-        })
-      );
+      console.log(chosenChild.key, chosenChild.type);
+      axios.post("/api/write_log", {
+        props: chosenChild.props,
+        origin: window.location.pathname,
+        duration: end - start,
+        timeToFirstInter: timeToFirstInter,
+      });
     };
     window.addEventListener("beforeunload", logger);
     return () => {
@@ -43,4 +35,6 @@ const RandomComp = (props: LayoutProps) => {
   return <div onClick={logInter}>{chosenChild}</div>;
 };
 
-export default RandomComp;
+const NoSsr = dynamic(() => Promise.resolve(RandomComp), { ssr: false });
+
+export default NoSsr;
